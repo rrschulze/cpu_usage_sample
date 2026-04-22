@@ -7,24 +7,24 @@
  *
  * Copyright IBM Corporation 2019
  */
-package com.zowe.usage.utilities;
+package com.ibm.sdsf.usage.utilities;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.springframework.context.annotation.Configuration;
-
 import com.ibm.zos.sdsf.core.ISFActive;
 import com.ibm.zos.sdsf.core.ISFActiveRunner;
 import com.ibm.zos.sdsf.core.ISFException;
 import com.ibm.zos.sdsf.core.ISFRequestSettings;
 
-@Configuration
-public class CPUUtilities {
+public final class CPUUtilities {
 
 	private static final Logger log = Logger.getLogger(CPUUtilities.class.getName());
+
+	private CPUUtilities() {
+	}
 
 	public static List<String> getCurrentSystemResourceUsage() {
 		List<String> resourceUsage = new ArrayList<String>();

@@ -2,70 +2,82 @@
 
 This sample is a demonstration of how to rapidly stand up a REST API to expose functionality from within the z/OS mainframe normally only available via green screen. Using in this case SDSF functionality that is made available through ISFJCALL we can access SDSF functions such as current CPU usage.
 
-This sample is not intended to be used in a production environment as-is but instead is intended to serve as a template for anyone else wanting to quickly get their own functionality running on Zowe via the API Gateway
+This sample is not intended to be used in a production environment as-is but instead is intended to serve as a template for exposing SDSF-backed functionality through a REST API on z/OS.
 
 ## Prerequisites
 
-In order to build the sample it's necessary to download the ISFJCALL jar file. When running on the z/OS machine the API's will interface with the libraries provided by the Java SDK which need to be enabled.  
+The project is intended to be built and run on z/OS only, where SDSF and `isfjcall.jar` are already present.
 
 For more information about SDSF and ensuring your installation is running the Java SDK please consult publication: SC27-9028-30: z/OS SDSF User's Guide
 
 ## Build
 
-For this example it is necessary to download the isfjcall.jar file from the host server so that the build can compile against it. Locate the file in the uss folder /usr/lpp/sdsf/java/classes/ and download it to your local machine Run the following command to install it into your local maven repo 
-```
-mvn install:install-file -Dfile=<your_download_folder>/isfjcall.jar -DgroupId=com.ibm -DartifactId=isfjcall -Dversion=1.0 -Dpackaging=jar
-```
-
-Run the build...
+Build the project on z/OS with IBM Semeru Runtime Certified Edition 17:
 ```
 mvn clean verify
 ```
-### Windows caveat
 
-The Maven build utilizes the Pax file compression utility to collect the build output files that need to be transferred to the z server. This utility is unavailable under windows. If you build under windows you will get a failure because the pax stage cannot be completed. However the three files will have been created in the target folder and can be manually transferred to z into their own folder. These files are the two shell scripts: install.sh and run-cpu-usage.sh and the cpu-n.n.n.jar file.  
+This project has been modernized to target Java 17 and Spring Boot 2.7.x on z/OS.
 
-This issue does not apply to OSx or Linux build clients or alternatively running within docker.
+## Run
 
-## Deploy
+Start the application on z/OS using the local runtime environment where SDSF support is available.
 
-The build creates a file called cpu-usage.pax that is to be transferred to your server. Create and change directory to zowe-extra. Copy this file here and extract using the command pax -ppx -rf cpu-usage.pax
+Use the REST endpoints directly to confirm the sample is installed locally. The previous embedded Swagger UI based on springfox was removed during modernization because that library is not a reliable fit for the newer Spring/Java 17 stack.
 
-## Update script variables
-
-Update the __PORT__ and __ZOWE_LOCATION__ variables in run-cpu-usage.sh to reflect your installation. SDSF is normally in the same place but check and reset this variable if it is not.
-
-Update the install.sh file using the same __PORT__ and __ZOWE_LOCATION__ values from the run-cpu-usage.sh along with the __ZOWE_EXPLORER_HOST__ name.
-
-Please note that __PORT__ will be any port of your choosing, which is currently not in use in your TCPIP config.
-
-## Run Scripts
-
-**Run once only.**
-The install.sh script creates the configuration necessary to define your service to the API Mediation layer. Run this script to create the definition although the Zowe server will need to be restarted to pick up this definition later.
-
-The cpu-usage.sh starts the Spring Boot application itself and runs independently of zowe so running from a command line you should see something like this.. 
-
+Example endpoint:
 ```
-Started UsageInfoApplication in 7.338 seconds (JVM running for 8.709)
+/cpu/snapshot
 ```
 
-It is to be expected that in a production scenario this shell script would be replaced by a job or other more formalised process.
-
-In a browser type the address https://{ZOWE_EXPLORER_HOST}:{PORT}/swagger-ui.html to see the following:
-
-![swagger](images/swagger.png)
-
-These entries can be expanded and the API's run confirming that your sample is installed locally. 
-
-If not already done so when running the cpu-usage-mediation-configure.sh restart the zowe server. 
-You will now be able to access the API's through the Gateway. Try the following:
-
-```
-https://{ZOWE_EXPLORER_HOST}:{ZOWE_PORT}/api/v1/cpu/snapshot
+Example `curl` request from z/OS USS:
+```sh
+curl -s http://localhost:8080/cpu/snapshot
 ```
 
-You will see a snapshot of CPU readings.
+Example `curl` request for the breakdown endpoint:
+```sh
+curl -s http://localhost:8080/cpu/breakdown
+```
+
+## OpenTelemetry Java agent
+
+You can run the application with the OpenTelemetry Java agent to get spans printed to the console without changing the application code.
+
+1. Download the OpenTelemetry Java agent jar on z/OS and place it somewhere accessible, for example:
+```sh
+/u/youruser/opentelemetry-javaagent.jar
+```
+
+2. Start the application with the agent enabled and configure console trace export:
+```sh
+java \
+  -javaagent:/u/youruser/opentelemetry-javaagent.jar \
+  -Dotel.service.name=cpu-usage-sample \
+  -Dotel.traces.exporter=logging \
+  -Dotel.metrics.exporter=none \
+  -Dotel.logs.exporter=none \
+  -jar target/cpu-1.0.0.jar
+```
+
+3. In another shell, invoke the application:
+```sh
+curl -s http://localhost:8080/cpu/snapshot
+curl -s http://localhost:8080/cpu/breakdown
+```
+
+4. Observe spans written to the application console output by the agent.
+
+Notes:
+- This is no-code instrumentation; no source changes are required.
+- The `logging` exporter prints span data locally to stdout/stderr for simple testing.
+- If your z/OS environment requires additional JVM settings, keep the `-javaagent` and `-Dotel.*` options on the Java command line.
+
+## Java 17 / z/OS notes
+
+- Build and run with IBM Semeru Runtime Certified Edition 17 on z/OS.
+- `isfjcall.jar` is expected to be present on the z/OS system.
+- The application is designed for z/OS execution, where the SDSF Java integration is available.
 
 ## What Next?
 

@@ -7,12 +7,9 @@
  *
  * Copyright IBM Corporation 2019
  */
-package com.zowe.usage.controllers;
+package com.ibm.sdsf.usage.controllers;
 
-import java.io.File;
 import java.util.List;
-
-import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,34 +22,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ibm.zos.sdsf.core.ISFActive;
-import com.zowe.usage.utilities.CPUUtilities;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import com.ibm.sdsf.usage.utilities.CPUUtilities;
 
 @RestController
 @RequestMapping("/cpu")
-@Api(value = "CPU Information", tags = {
-		"CPU Operations" }, description = "Operations providing insights to system performance")
 public class CPUController {
 
-	File logFile;
-	Logger logger = LoggerFactory.getLogger(CPUController.class);
-
-	@Inject
-	CPUUtilities utils;
+	private static final Logger LOGGER = LoggerFactory.getLogger(CPUController.class);
 
 	@GetMapping("/snapshot")
-	@ApiOperation(value = "Get a snapshot of CPU Usage", tags = { "CPU Operations" })
 	public @ResponseBody List<String> getUsage() {
 		return CPUUtilities.getCurrentSystemResourceUsage();
 	}
 
 	@GetMapping("/breakdown")
-	@ApiOperation(value = "Get breakdown of current system CPU usage", notes = "This API returns the current system CPU usage, along with some other current system statistics.", tags = {
-			"CPU Operations" }, response = ObjectNode.class)
 	public @ResponseBody ObjectNode getCPUInformation() {
-		logger.info("getCPU called");
+		LOGGER.info("getCPU called");
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode node = mapper.createObjectNode();
 		List<ISFActive> activeAddressSpaces = CPUUtilities.runSDSFDisplayActiveRequest();

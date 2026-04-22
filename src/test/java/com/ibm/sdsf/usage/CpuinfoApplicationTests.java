@@ -7,21 +7,18 @@
  *
  * Copyright IBM Corporation 2019
  */
-package com.zowe.usage;
+package com.ibm.sdsf.usage;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-public class CpuinfoApplicationTests {
+class CpuinfoApplicationTests {
 
 	@Test
-	public void contextLoads() {
+	void contextLoads() {
 	}
 
 }
